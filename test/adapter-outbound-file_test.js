@@ -33,7 +33,7 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 	// collect the error messages from the step
 	const errors = [];
 
-	let outboundFile = outboundFileFactory(options);
+	let outboundFile = outboundFileFactory({}, {}, options);
 
 	outboundFile._logMessage = function (level, message, err, endpointName) {
 		errors.push(err);
@@ -182,7 +182,7 @@ describe('adapter-outbound-file: test events', function () {
 
 describe('adapter-outbound-file: config', function () {
 	it('Create the step directory.', function (done) {
-		let outboundFile = outboundFileFactory({
+		let outboundFile = outboundFileFactory({}, {}, {
 			"name": "myStep",
 			"directory": "path/to/nowhere"
 		});
@@ -192,7 +192,7 @@ describe('adapter-outbound-file: config', function () {
 
 
 	it('Create the step with default config. (only step name)', function (done) {
-		let outboundFile = outboundFileFactory({
+		let outboundFile = outboundFileFactory({}, {}, {
 			"name": "myStep"
 		});
 		assert.isObject(outboundFile);
@@ -202,7 +202,7 @@ describe('adapter-outbound-file: config', function () {
 
 	it('ERROR: No config given', function (done) {
 		let fn = function () {
-			let outboundFile = outboundFileFactory();
+			let outboundFile = outboundFileFactory({}, {});
 		};
 		expect(fn).to.throw('No config given.');
 
