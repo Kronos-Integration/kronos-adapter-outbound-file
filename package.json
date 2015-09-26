@@ -10,12 +10,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/darlenya/kronos-adapter-outbound-file.git"
+    "url": "git+https://git@github.com/Kronos-Integration/kronos-adapter-outbound-file.git"
   },
   "bugs": {
-    "url": "https://github.com/darlenya/kronos-adapter-outbound-file/issues"
+    "url": "https://github.com/Kronos-Integration/kronos-adapter-outbound-file/issues"
   },
-  "homepage": "https://github.com/darlenya/kronos-adapter-outbound-file#readme",
+  "homepage": "https://github.com/Kronos-Integration/kronos-adapter-outbound-file#readme",
   "engines": {
     "iojs": "2.0.0"
   },
@@ -36,6 +36,6 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "iconv-lite": "^0.4.11",
-    "kronos-step": "git+ssh://donkey@mfelten.de/Groups/donkey/git/kronos-step.git"
+    "kronos-step": "^1.1.0"
   }
 }
