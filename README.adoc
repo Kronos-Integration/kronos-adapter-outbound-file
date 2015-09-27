@@ -24,7 +24,6 @@ relative file names.
 <3> (Optional)  The encoding to use when writing the files. Default is binary. The stream should already
 be encoded. For more information on the supported encoding see ''fs.createWriteStream''.
 
-
 === Endpoints
 This Adapter has only one endpoint which reads the write jobs.
 
