@@ -1,0 +1,50 @@
+== Adapter Outbound File
+This adapter writes a file into the file system. The data will be delivered by a message with a stream as payload.
+
+=== Configuration
+The configuration for this step is as follows.
+
+.Message formats
+[source,js]
+----
+{
+  "name" : stepName,           <1>
+  "directory": destDirectory,  <2>
+  "encoding": "binary"         <3>
+}
+----
+<1> (Mandatory) The name of this step. This name will be used the reference this step in a 'flow'.
+<2> (Optional)  The directory to write the files to. This is mandatory if the messages will contain
+relative file names.
+<3> (Optional)  The encoding to use when writing the files. Default is binary. The stream should already
+be encoded. For more information on the supported encoding see ''fs.createWriteStream''.
+
+=== Endpoints
+This Adapter has only one endpoint which reads the write jobs.
+
+==== inWriteFile
+This endpoint could be used to trigger files for reading.
+
+.Endpoint description
+[options="header", cols="2"]
+|====
+|Description|Value
+|*Name*|inWriteFile
+|*Direction*|in
+|*Active*|false
+|*Passive*|true
+|====
+
+.Message formats
+[source,js]
+----
+{
+  "header": {
+    "file_name" : fileName   <1>
+  },
+  "payload": stream          <2>
+}
+----
+<1> The name of the file. This could be an absolute file name or a relative on. If the file name is relative
+then the step configuration must be set a ''directory'' property.
+<2> A readable stream to read the data from which should be written to the file.
