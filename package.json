@@ -36,6 +36,6 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "iconv-lite": "0.4.13",
-    "kronos-step": "1.2.2"
+    "kronos-step": "2.2.0"
   }
 }
