@@ -15,8 +15,19 @@ const rimraf = require('rimraf');
 const fixturesDir = path.join(__dirname, 'fixtures');
 const volatileDir = path.join(__dirname, 'fixtures', 'volatile');
 
-const outboundFileFactory = require('../lib/adapter-outbound-file');
-const messageFactory = require('kronos-step').message;
+const kronosAdapterOutboundFile = require('../index');
+const testStep = require('kronos-test-step');
+const step = require('kronos-step');
+const messageFactory = require('kronos-message');
+
+// ---------------------------
+// Create a mock manager
+// ---------------------------
+const manager = testStep.managerMock;
+
+kronosAdapterOutboundFile.registerWithManager(manager);
+
+
 
 /**
  * Creates the outboundFileAdapter step and send it the given message
@@ -33,16 +44,22 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 	// collect the error messages from the step
 	const errors = [];
 
-	let outboundFile = outboundFileFactory({}, {}, options);
+	options.type = "kronos-adapter-outbound-file";
+	let outboundFile = manager.getStepInstance(options);
 
-	outboundFile._logMessage = function (level, message, err, endpointName) {
-		errors.push(err);
+	outboundFile.error = function (logObject) {
+		errors.push(logObject.txt);
 	};
 
+	// This endpoint is the OUT endpoint of the previous step.
+	// It will be connected with the OUT endpoint of the Adpater
+	let sendEndpoint = step.createEndpoint("testEndpointOut", {
+		"out": true,
+		"active": true
+	});
 
-	let inEndPoint = outboundFile.getEndpoint('inWriteFile');
-	let it = inEndPoint.getInPassiveIterator()();
-	it.next();
+	let inEndPoint = outboundFile.endpoints.inWriteFile;
+	inEndPoint.connect(sendEndpoint);
 
 	let msg = messageFactory(messageHeader);
 
@@ -52,30 +69,34 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 		msg.payload = undefined;
 	}
 
-	// send the message to the step
-	it.next(msg);
+	outboundFile.start().then(function (step) {
+		// send the message to the step
+		sendEndpoint.send(msg);
 
-	// validate that the file exists
-	setTimeout(function () {
+		// validate that the file exists
+		setTimeout(function () {
 
-		if (expectedErrors) {
-			// custom verification function for error checks
-			assert.deepEqual(errors, expectedErrors);
-			done();
-		} else {
-			// check that the file exists
-			// Query the entry
-			let stats = fs.lstatSync(destFile);
-
-			// Is it a directory?
-			if (stats.isFile()) {
+			if (expectedErrors) {
+				// custom verification function for error checks
+				assert.deepEqual(errors, expectedErrors);
 				done();
 			} else {
-				assert.ok(false, "The file does not exists");
-			}
-		}
+				// check that the file exists
+				// Query the entry
+				let stats = fs.lstatSync(destFile);
 
-	}, 10);
+				// Is it a directory?
+				if (stats.isFile()) {
+					done();
+				} else {
+					assert.ok(false, "The file does not exists");
+				}
+			}
+		}, 10);
+	}, function (error) {
+		done(error); // 'uh oh: something bad happened’
+	});
+
 }
 
 
@@ -182,7 +203,8 @@ describe('adapter-outbound-file: test events', function () {
 
 describe('adapter-outbound-file: config', function () {
 	it('Create the step directory.', function (done) {
-		let outboundFile = outboundFileFactory({}, {}, {
+		let outboundFile = manager.getStepInstance({
+			"type": "kronos-adapter-outbound-file",
 			"name": "myStep",
 			"directory": "path/to/nowhere"
 		});
@@ -192,20 +214,12 @@ describe('adapter-outbound-file: config', function () {
 
 
 	it('Create the step with default config. (only step name)', function (done) {
-		let outboundFile = outboundFileFactory({}, {}, {
+		let outboundFile = manager.getStepInstance({
+			"type": "kronos-adapter-outbound-file",
 			"name": "myStep"
 		});
 		assert.isObject(outboundFile);
 		assert.equal(outboundFile.name, 'myStep', 'The step name is not as expected');
-		done();
-	});
-
-	it('ERROR: No config given', function (done) {
-		let fn = function () {
-			let outboundFile = outboundFileFactory({}, {});
-		};
-		expect(fn).to.throw('No config given.');
-
 		done();
 	});
 
