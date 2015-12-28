@@ -48,7 +48,7 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 	let outboundFile = manager.getStepInstance(options);
 
 	outboundFile.error = function (logObject) {
-		errors.push(logObject.txt);
+		errors.push(logObject.short_message);
 	};
 
 	// This endpoint is the OUT endpoint of the previous step.
