@@ -54,8 +54,7 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 	// This endpoint is the OUT endpoint of the previous step.
 	// It will be connected with the OUT endpoint of the Adpater
 	let sendEndpoint = step.createEndpoint("testEndpointOut", {
-		"out": true,
-		"active": true
+		"out": true
 	});
 
 	let inEndPoint = outboundFile.endpoints.inWriteFile;
