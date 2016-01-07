@@ -18,7 +18,6 @@ const volatileDir = path.join(__dirname, 'fixtures', 'volatile');
 const kronosAdapterOutboundFile = require('../index');
 const testStep = require('kronos-test-step');
 const step = require('kronos-step');
-const messageFactory = require('kronos-message');
 
 // ---------------------------
 // Create a mock manager
@@ -60,7 +59,9 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 	let inEndPoint = outboundFile.endpoints.inWriteFile;
 	inEndPoint.connect(sendEndpoint);
 
-	let msg = messageFactory(messageHeader);
+	let msg = {
+		"info": messageHeader
+	};
 
 	if (!noStream) {
 		msg.payload = fs.createReadStream(path.join(fixturesDir, 'existing_file.csv'));
@@ -70,31 +71,56 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 
 	outboundFile.start().then(function (step) {
 		// send the message to the step
-		sendEndpoint.send(msg);
-
-		// validate that the file exists
-		setTimeout(function () {
-
-			if (expectedErrors) {
-				// custom verification function for error checks
-				assert.deepEqual(errors, expectedErrors);
-				done();
-			} else {
-				// check that the file exists
-				// Query the entry
-				let stats = fs.lstatSync(destFile);
-
-				// Is it a directory?
-				if (stats.isFile()) {
-					done();
+		sendEndpoint.send(msg).then(
+			function (val) {
+				if (expectedErrors) {
+					assert.false("There where errors expected. The promise should fail");
 				} else {
-					assert.ok(false, "The file does not exists");
+					// check that the file exists
+					// Query the entry
+					let stats = fs.lstatSync(destFile);
+
+					// Is it a directory?
+					if (stats.isFile()) {} else {
+						assert.ok(false, "The file does not exists");
+					}
 				}
+				done();
 			}
-		}, 10);
-	}, function (error) {
+		).catch(function (err) {
+			if (expectedErrors) {
+				assert.deepEqual(errors, expectedErrors);
+			} else {
+				assert.false("There where NO errors expected. The promise should be fulfilled");
+			}
+			done();
+		});
+
+		// // validate that the file exists
+		// setTimeout(function () {
+		//
+		// 	if (expectedErrors) {
+		// 		// custom verification function for error checks
+		// 		assert.deepEqual(errors, expectedErrors);
+		// 		done();
+		// 	} else {
+		// 		// check that the file exists
+		// 		// Query the entry
+		// 		let stats = fs.lstatSync(destFile);
+		//
+		// 		// Is it a directory?
+		// 		if (stats.isFile()) {
+		// 			done();
+		// 		} else {
+		// 			assert.ok(false, "The file does not exists");
+		// 		}
+		// 	}
+		// }, 10);
+	}).catch(function (error) {
 		done(error); // 'uh oh: something bad happened’
 	});
+
+
 
 }
 
