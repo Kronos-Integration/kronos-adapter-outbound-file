@@ -22,7 +22,7 @@
   "homepage": "https://github.com/Kronos-Integration/kronos-adapter-outbound-file#readme",
   "dependencies": {
     "iconv-lite": "0.4.13",
-    "kronos-step": "^3.4.1"
+    "kronos-step": "^3.5.1"
   },
   "devDependencies": {
     "chai": "3.4.1",
