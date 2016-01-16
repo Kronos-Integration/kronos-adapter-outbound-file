@@ -52,12 +52,10 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 
 	// This endpoint is the OUT endpoint of the previous step.
 	// It will be connected with the OUT endpoint of the Adpater
-	let sendEndpoint = step.createEndpoint("testEndpointOut", {
-		"out": true
-	});
+	let sendEndpoint = new step.endpoint.SendEndpoint("testEndpointOut");
 
 	let inEndPoint = outboundFile.endpoints.inWriteFile;
-	inEndPoint.connect(sendEndpoint);
+	sendEndpoint.connected = inEndPoint;
 
 	let msg = {
 		"info": messageHeader
@@ -71,7 +69,7 @@ function collect(options, messageHeader, done, expectedErrors, noStream) {
 
 	outboundFile.start().then(function (step) {
 		// send the message to the step
-		sendEndpoint.send(msg).then(
+		sendEndpoint.receive(msg).then(
 			function (val) {
 				if (expectedErrors) {
 					assert.false("There where errors expected. The promise should fail");
