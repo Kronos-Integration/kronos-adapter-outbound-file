@@ -2,7 +2,6 @@
 "use strict";
 
 const AdapterOutboundFileFactory = require('./lib/adapter-outbound-file');
-
 exports.adpaterOutboundFile = AdapterOutboundFileFactory;
 
 exports.registerWithManager = function (manager) {
