@@ -18,107 +18,96 @@ const volatileDir = path.join(__dirname, 'fixtures', 'volatile');
 const kronosAdapterOutboundFile = require('../index');
 const testStep = require('kronos-test-step');
 const step = require('kronos-step');
+const serviceManager = require('kronos-service-manager');
 
 // ---------------------------
 // Create a mock manager
 // ---------------------------
-const manager = testStep.managerMock;
 
-kronosAdapterOutboundFile.registerWithManager(manager);
+const managerPromise = serviceManager.manager().then(manager =>
+	Promise.all([
+		kronosAdapterOutboundFile.registerWithManager(manager)
+	]).then(() =>
+		Promise.resolve(manager)
+	));
 
 
 
 /**
  * Creates the outboundFileAdapter step and send it the given message
  * @param options The options to create the adapter
- * @param messageHeader The messageHeader for themessage to send to the adapter
- * @param done The done callback for the test framework
+ * @param messageHeader The messageHeader for the message to send to the adapter
  * @param expectedErrors An array with the expected error messages
  * @param noStream if set to true, the message will be send without a payload
  */
-function collect(options, messageHeader, done, expectedErrors, noStream) {
-	// The file expected to be written
-	const destFile = path.join(volatileDir, "myFile.csv");
+function collect(options, messageHeader, expectedErrors, noStream) {
+	return managerPromise.then(manager => {
 
-	// collect the error messages from the step
-	const errors = [];
+		// The file expected to be written
+		const destFile = path.join(volatileDir, "myFile.csv");
 
-	options.type = "kronos-adapter-outbound-file";
-	let outboundFile = manager.getStepInstance(options);
+		// collect the error messages from the step
+		const errors = [];
 
-	outboundFile.error = function (logObject) {
-		errors.push(logObject.short_message);
-	};
+		options.type = "kronos-adapter-outbound-file";
+		let outboundFile = manager.createStepInstanceFromConfig(options, manager);
 
-	// This endpoint is the OUT endpoint of the previous step.
-	// It will be connected with the OUT endpoint of the Adpater
-	let sendEndpoint = new step.endpoint.SendEndpoint("testEndpointOut");
+		outboundFile.error = function (logObject) {
+			errors.push(logObject.short_message);
+		};
 
-	let inEndPoint = outboundFile.endpoints.inWriteFile;
-	sendEndpoint.connected = inEndPoint;
+		// This endpoint is the OUT endpoint of the previous step.
+		// It will be connected with the OUT endpoint of the Adpater
+		let sendEndpoint = new step.endpoint.SendEndpoint("testEndpointOut");
 
-	let msg = {
-		"info": messageHeader
-	};
+		let inEndPoint = outboundFile.endpoints.inWriteFile;
+		sendEndpoint.connected = inEndPoint;
 
-	if (!noStream) {
-		msg.payload = fs.createReadStream(path.join(fixturesDir, 'existing_file.csv'));
-	} else {
-		msg.payload = undefined;
-	}
+		let msg = {
+			"info": messageHeader
+		};
 
-	outboundFile.start().then(function (step) {
-		// send the message to the step
-		sendEndpoint.receive(msg).then(
-			function (val) {
-				if (expectedErrors) {
-					assert.false("There where errors expected. The promise should fail");
-				} else {
-					// check that the file exists
-					// Query the entry
-					let stats = fs.lstatSync(destFile);
+		if (!noStream) {
+			msg.payload = fs.createReadStream(path.join(fixturesDir, 'existing_file.csv'));
+		} else {
+			msg.payload = undefined;
+		}
 
-					// Is it a directory?
-					if (stats.isFile()) {} else {
-						assert.ok(false, "The file does not exists");
+		return outboundFile.start().then((step) => {
+			// send the message to the step
+			return sendEndpoint.receive(msg).then(
+				function (val) {
+					if (expectedErrors) {
+						assert.false("There where errors expected. The promise should fail");
+						return Promise.reject("Error");
+					} else {
+						// check that the file exists
+						// Query the entry
+						let stats = fs.lstatSync(destFile);
+
+						// Is it a file?
+						if (stats.isFile()) {
+							return Promise.resolve("OK");
+						} else {
+							assert.ok(false, "The file does not exists");
+							return Promise.reject("Error");
+						}
 					}
+					return Promise.reject("Error");
 				}
-				done();
-			}
-		).catch(function (err) {
-			if (expectedErrors) {
-				assert.deepEqual(errors, expectedErrors);
-			} else {
-				assert.false("There where NO errors expected. The promise should be fulfilled");
-			}
-			done();
+			).catch(function (err) {
+				if (expectedErrors) {
+					assert.deepEqual(errors, expectedErrors);
+					return Promise.resolve("OK");
+				} else {
+					assert.false("There where NO errors expected. The promise should be fulfilled");
+					return Promise.reject("Error");
+				}
+
+			});
+
 		});
-
-		// // validate that the file exists
-		// setTimeout(function () {
-		//
-		// 	if (expectedErrors) {
-		// 		// custom verification function for error checks
-		// 		assert.deepEqual(errors, expectedErrors);
-		// 		done();
-		// 	} else {
-		// 		// check that the file exists
-		// 		// Query the entry
-		// 		let stats = fs.lstatSync(destFile);
-		//
-		// 		// Is it a directory?
-		// 		if (stats.isFile()) {
-		// 			done();
-		// 		} else {
-		// 			assert.ok(false, "The file does not exists");
-		// 		}
-		// 	}
-		// }, 10);
-	}).catch(function (error) {
-		done(error); // 'uh oh: something bad happened’
 	});
-
-
 
 }
 
@@ -128,7 +117,7 @@ describe('adapter-outbound-file: test events', function () {
 	 * Clears the test directory. This is the directory where the files will be written
 	 */
 	beforeEach(function () {
-		// Delete all the the 'volatile' directory
+		// Delete the the 'volatile' directory
 		try {
 			rimraf.sync(volatileDir);
 		} catch (err) {
@@ -139,111 +128,117 @@ describe('adapter-outbound-file: test events', function () {
 	});
 
 
-	it('Send event: absolute file name', function (done) {
+	it('Send event: absolute file name', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep"
 		}, {
 			"file_name": destFile
-		}, done);
+		});
 	});
 
-	it('Send event: absolute file name with directory given', function (done) {
+	it('Send event: absolute file name with directory given', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep",
 			"directory": volatileDir
 		}, {
 			"file_name": destFile
-		}, done);
+		});
 	});
 
-	it('Send event: relative file name with directory given', function (done) {
+	it('Send event: relative file name with directory given', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep",
 			"directory": volatileDir
 		}, {
 			"file_name": "myFile.csv"
-		}, done);
+		});
 	});
 
-	it('Send event: Write with custom encoding', function (done) {
+	it('Send event: Write with custom encoding', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep",
 			"directory": volatileDir,
 			"encoding": "base64"
 		}, {
 			"file_name": "myFile.csv"
-		}, done);
+		});
 	});
 
 
-	it('Error: Send event: relative file name without directory given', function (done) {
+	it('Error: Send event: relative file name without directory given', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep"
 		}, {
 			"file_name": "myFile.csv"
-		}, done, ['If there is no directory in the step configuration, then the file names must be absolute']);
+		}, ['If there is no directory in the step configuration, then the file names must be absolute']);
 	});
 
-	it('Error: Send event: message without payload', function (done) {
+	it('Error: Send event: message without payload', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep",
 			"directory": volatileDir
 		}, {
 			"file_name": "myFile.csv"
-		}, done, ['The payload of the message has no stream'], true);
+		}, ['The payload of the message has no stream'], true);
 	});
 
-	it('Error: Send event: No "file_name" in the message header', function (done) {
+	it('Error: Send event: No "file_name" in the message header', function () {
 		// the file name of the file to be written by the step
 		const destFile = path.join(volatileDir, "myFile.csv");
 
-		collect({
+		return collect({
 			"name": "myStep",
 			"directory": volatileDir
 		}, {
 			"no_file_name": "myFile.csv"
-		}, done, ["No 'file_name' property in the header"], true);
+		}, ["No 'file_name' property in the header"], true);
 	});
 });
 
 describe('adapter-outbound-file: config', function () {
-	it('Create the step directory.', function (done) {
-		let outboundFile = manager.getStepInstance({
-			"type": "kronos-adapter-outbound-file",
-			"name": "myStep",
-			"directory": "path/to/nowhere"
+	it('Create the step directory.', function () {
+		return managerPromise.then(manager => {
+
+			let outboundFile = manager.createStepInstanceFromConfig({
+				"type": "kronos-adapter-outbound-file",
+				"name": "myStep",
+				"directory": "path/to/nowhere"
+			}, manager);
+			assert.equal(outboundFile.directory, 'path/to/nowhere', 'The directory is not as expected');
+			return Promise.resolve("OK");
 		});
-		assert.equal(outboundFile.directory, 'path/to/nowhere', 'The directory is not as expected');
-		done();
 	});
 
 
-	it('Create the step with default config. (only step name)', function (done) {
-		let outboundFile = manager.getStepInstance({
-			"type": "kronos-adapter-outbound-file",
-			"name": "myStep"
+	it('Create the step with default config. (only step name)', function () {
+		return managerPromise.then(manager => {
+
+			let outboundFile = manager.createStepInstanceFromConfig({
+				"type": "kronos-adapter-outbound-file",
+				"name": "myStep"
+			}, manager);
+			assert.isObject(outboundFile);
+			assert.equal(outboundFile.name, 'myStep', 'The step name is not as expected');
+			return Promise.resolve("OK");
 		});
-		assert.isObject(outboundFile);
-		assert.equal(outboundFile.name, 'myStep', 'The step name is not as expected');
-		done();
 	});
 
 

@@ -22,11 +22,12 @@
   "homepage": "https://github.com/Kronos-Integration/kronos-adapter-outbound-file#readme",
   "dependencies": {
     "iconv-lite": "0.4.13",
-    "kronos-step": "^3.9.0"
+    "kronos-step": "^4.0.1"
   },
   "devDependencies": {
     "chai": "3.5.0",
     "istanbul": "^0.4.2",
+    "kronos-service-manager": "^3.2.0",
     "kronos-test-step": "2.10.0",
     "mocha": "2.4.5",
     "rimraf": "2.5.1",
@@ -44,6 +45,6 @@
   ],
   "license": "BSD-2-Clause",
   "engines": {
-    "node": ">=4.2.1"
+    "node": ">=5"
   }
 }
