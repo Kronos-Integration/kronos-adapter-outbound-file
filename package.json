@@ -27,7 +27,7 @@
   "devDependencies": {
     "chai": "3.5.0",
     "istanbul": "0.4.2",
-    "kronos-service-manager": "^3.2.3",
+    "kronos-service-manager": "^3.2.5",
     "kronos-test-step": "2.10.0",
     "mocha": "2.4.5",
     "rimraf": "2.5.1",
