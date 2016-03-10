@@ -18,6 +18,7 @@ const volatileDir = path.join(__dirname, 'fixtures', 'volatile');
 const kronosAdapterOutboundFile = require('../index');
 const testStep = require('kronos-test-step');
 const step = require('kronos-step');
+const endpoint = require('kronos-endpoint');
 const serviceManager = require('kronos-service-manager');
 
 // ---------------------------
@@ -58,7 +59,7 @@ function collect(options, messageHeader, expectedErrors, noStream) {
 
 		// This endpoint is the OUT endpoint of the previous step.
 		// It will be connected with the OUT endpoint of the Adpater
-		let sendEndpoint = new step.endpoint.SendEndpoint("testEndpointOut");
+		let sendEndpoint = new endpoint.SendEndpoint("testEndpointOut");
 
 		let inEndPoint = outboundFile.endpoints.inWriteFile;
 		sendEndpoint.connected = inEndPoint;
