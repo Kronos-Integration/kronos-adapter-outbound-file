@@ -79,7 +79,7 @@ function collect(options, messageHeader, expectedErrors, noStream) {
 			return sendEndpoint.receive(msg).then(
 				function (val) {
 					if (expectedErrors) {
-						assert.false("There where errors expected. The promise should fail");
+						assert.isFalse("There where errors expected. The promise should fail");
 						return Promise.reject("Error");
 					} else {
 						// check that the file exists
@@ -101,7 +101,7 @@ function collect(options, messageHeader, expectedErrors, noStream) {
 					assert.deepEqual(errors, expectedErrors);
 					return Promise.resolve("OK");
 				} else {
-					assert.false("There where NO errors expected. The promise should be fulfilled");
+					assert.isFalse("There where NO errors expected. The promise should be fulfilled");
 					return Promise.reject("Error");
 				}
 
