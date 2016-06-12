@@ -22,14 +22,14 @@
   "homepage": "https://github.com/Kronos-Integration/kronos-adapter-outbound-file#readme",
   "dependencies": {
     "iconv-lite": "0.4.13",
-    "kronos-step": "^5.3.3"
+    "kronos-step": "^5.3.4"
   },
   "devDependencies": {
     "chai": "3.5.0",
     "cz-conventional-changelog": "1.1.6",
     "istanbul": "0.4.3",
     "jsdoc": "3.4.0",
-    "kronos-service-manager": "^3.4.2",
+    "kronos-service-manager": "^3.4.6",
     "kronos-test-step": "^3.1.4",
     "mocha": "2.5.3",
     "rimraf": "2.5.2",
