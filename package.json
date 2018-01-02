@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "iconv-lite": "0.4.19",
-    "kronos-step": "^5.6.5"
+    "kronos-step": "^5.6.6"
   },
   "devDependencies": {
     "chai": "^4.1.2",
