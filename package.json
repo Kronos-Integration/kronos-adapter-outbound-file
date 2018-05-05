@@ -24,7 +24,7 @@
     "semantic-release": "semantic-release"
   },
   "dependencies": {
-    "iconv-lite": "0.4.20",
+    "iconv-lite": "0.4.22",
     "kronos-step": "^5.6.6"
   },
   "devDependencies": {
