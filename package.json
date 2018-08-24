@@ -34,12 +34,12 @@
     "jsdoc": "3.5.5",
     "kronos-service-manager": "^3.5.9",
     "kronos-test-step": "^3.1.4",
-    "mocha": "^5.1.1",
+    "mocha": "^5.2.0",
     "rimraf": "^2.6.2",
-    "semantic-release": "^15.5.0"
+    "semantic-release": "^15.9.9"
   },
   "engines": {
-    "node": ">=10.6"
+    "node": ">=8.11.4"
   },
   "repository": {
     "type": "git",
